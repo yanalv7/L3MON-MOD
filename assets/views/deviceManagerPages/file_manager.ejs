@@ -13,25 +13,6 @@
             </tr>
         </thead>
         <tbody id="fileTableBody">
-            <% pageData.forEach((item) => { %>
-            <tr>
-                <td title="<%= item.path %>"><%= item.name %></td>
-                <td class="collapsing">
-                    <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
-                    </button>
-                    <button class="ui button red" onclick="deleteFile(this, '<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon trash"></i>
-                    </button>
-                    <% } else { %>
-                    <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
-                    </button>
-                    <% } %>
-                </td>
-            </tr>
-            <% }) %>
         </tbody>
     </table>
 
