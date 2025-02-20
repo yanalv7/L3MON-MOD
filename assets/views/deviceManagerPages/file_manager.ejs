@@ -36,7 +36,7 @@
     </table>
 
     <script>
-        // Function to open a directory and list its contents
+        // وظيفة لفتح الدليل وعرض محتوياته
         function openDirectory(element, path) {
             toggleButtonState(element, true);
             fetch(`/api/files?path=${encodeURIComponent(path)}`)
@@ -56,7 +56,7 @@
                 });
         }
 
-        // Function to download a file
+        // وظيفة لتنزيل ملف
         function downloadFile(element, path) {
             toggleButtonState(element, true);
             fetch(`/api/download?path=${encodeURIComponent(path)}`)
@@ -72,9 +72,9 @@
                 });
         }
 
-        // Function to delete a file
+        // وظيفة لحذف ملف
         function deleteFile(element, path) {
-            const confirmation = confirm("Are you sure you want to delete this file?");
+            const confirmation = confirm("هل أنت متأكد أنك تريد حذف هذا الملف؟");
             if (!confirmation) return;
 
             toggleButtonState(element, true);
@@ -87,8 +87,8 @@
             })
             .then(response => {
                 if (!response.ok) throw new Error('Delete failed');
-                $(element).closest('tr').remove(); // Remove the row from the table
-                showNotification('#2ecc71', 'File deleted successfully.');
+                $(element).closest('tr').remove(); // إزالة الصف من الجدول
+                showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
             })
             .catch(error => {
                 showNotification('#f03434', error.message);
@@ -98,24 +98,10 @@
             });
         }
 
-        // Helper function to toggle button state
-        function toggleButtonState(element, isLoading) {
-            const $element = $(element);
-            if (isLoading) {
-                $element.children().css("opacity", "0");
-                $element.addClass('loading');
-                $('.dlop').addClass('disabled');
-            } else {
-                $element.children().css("opacity", "1");
-                $element.removeClass('loading');
-                $('.dlop').removeClass('disabled');
-            }
-        }
-
-        // Function to update the file table with new data
+        // وظيفة لتحديث جدول الملفات بالبيانات الجديدة
         function updateFileTable(files) {
             const tbody = $('#fileTableBody');
-            tbody.empty(); // Clear existing entries
+            tbody.empty(); // مسح الإدخالات الحالية
             files.forEach(file => {
                 const row = `<tr>
                     <td title="${file.path}">${file.name}</td>
@@ -137,10 +123,24 @@
             });
         }
 
-        // Function to show notifications
+        // وظيفة لإظهار الإشعارات
         function showNotification(color, message) {
             console.log(`%c${message}`, `color: ${color}`);
-            // Implement actual notification logic here (e.g., using a toast or modal)
+            // تنفيذ منطق الإشعار الفعلي هنا (مثل استخدام إشعار أو نافذة منبثقة)
+        }
+
+        // وظيفة لتبديل حالة الزر
+        function toggleButtonState(element, isLoading) {
+            const $element = $(element);
+            if (isLoading) {
+                $element.children().css("opacity", "0");
+                $element.addClass('loading');
+                $('.dlop').addClass('disabled');
+            } else {
+                $element.children().css("opacity", "1");
+                $element.removeClass('loading');
+                $('.dlop').removeClass('disabled');
+            }
         }
     </script>
 </div>
