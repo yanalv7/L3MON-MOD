@@ -4,19 +4,36 @@
       <tr>
         <th style="text-align: center" colspan="3">Downloads</th>
       </tr>
+      <tr>
+        <th style="text-align: center">Date</th>
+        <th style="text-align: center">File Name</th>
+        <th style="text-align: center">Actions</th>
+      </tr>
     </thead>
     <tbody>
-      <% pageData.forEach((item) => { let date = new Date(item.time); %>
+      <% pageData.forEach((item) => { 
+          let date = new Date(item.time); 
+      %>
       <tr>
-        <td class="collapsing">
+        <td class="collapsing" style="text-align: center;">
           <%= date.toLocaleString('en-IN', { timeZone: 'IST' }) %>
         </td>
-        <td><%= item.originalName %></td>
-        <td class="collapsing">
+        <td style="text-align: left;">
+          <%= item.originalName %>
+        </td>
+        <td class="collapsing" style="text-align: center;">
           <div class="ui buttons">
-            <a href="<%= item.path %>" target="_blank" class="ui button blue">Open</a>
+            <a href="<%= item.path %>" target="_blank" class="ui button blue">
+              <i class="icon eye"></i> Open
+            </a>
             <div class="or"></div>
-            <a href="<%= item.path %>" download="<%= item.originalName %>" class="ui positive button">Save</a>
+            <a
+              href="<%= item.path %>"
+              download="<%= item.originalName %>"
+              class="ui positive button"
+            >
+              <i class="icon download"></i> Save
+            </a>
           </div>
         </td>
       </tr>
