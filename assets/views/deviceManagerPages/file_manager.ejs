@@ -33,6 +33,46 @@
 
     <script>
 
+<div class="ui segment">
+    <div class="ui secondary menu">
+        <div class="right menu">
+            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop">
+                <i class="icon home"></i>Home
+            </button>
+        </div>
+    </div>
+    <table class="ui celled table">
+        <thead>
+            <tr>
+                <th style="text-align: center" colspan="3">Files</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% pageData.forEach((item) => { %>
+            <tr>
+                <td title="<%= item.path %>"><%= item.name %></td>
+                <td class="collapsing">
+                    <% if(!item.isDir) { %>
+                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
+                        <i class="icon download blue"></i>
+                    </button>
+                    <% } else { %>
+                    <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
+                        <i class="icon folder open grey"></i>
+                    </button>
+                    <% } %>
+                </td>
+                <td class="collapsing">
+                    <button class="ui button dlop" onclick="deleteFile(this, '<%= item.path %>')">
+                        <i class="icon trash red"></i>
+                    </button>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <script>
         function openDirectory(element, path) {
             $(element).children().css("opacity", "0");
             $(element).addClass('blue');
@@ -44,20 +84,20 @@
             }, (error, message) => {
                 if (error) {
                     setTimeout(() => {
-                        showNotification('#f03434', error)
+                        showNotification('#f03434', error);
                         $(element).children().css("opacity", "1");
                         $(element).removeClass('blue');
-                        $('.dlop').removeClass('loading')
-                    }, 300)
+                        $('.dlop').removeClass('loading');
+                    }, 300);
                 } else {
                     if (message === 'Requested') {
                         showNotification('#2ecc71', 'Requesting Files, Please Wait');
                         setTimeout(() => {
                             location.reload();
-                        }, 500)
+                        }, 500);
                     }
                 }
-            })
+            });
         }
 
         function downloadFile(element, path) {
@@ -71,23 +111,54 @@
             }, (error, message) => {
                 if (error) {
                     setTimeout(() => {
-                        showNotification('#f03434', error)
+                        showNotification('#f03434', error);
                         $(element).children().css("opacity", "1");
                         $(element).removeClass('green');
-                        $('.dlop').removeClass('disabled')
-                    }, 300)
+                        $('.dlop').removeClass('disabled');
+                    }, 300);
                 } else {
                     if (message === 'Requested') {
                         setTimeout(() => {
                             $(element).children().css("opacity", "1");
                             $(element).removeClass('green');
                             $(element).removeClass('loading');
-                            $('.dlop').removeClass('disabled')
-                            showNotification('#2ecc71', 'Downloading File, It will be avaliable in `Downloads` Soon');
-                        }, 300)
+                            $('.dlop').removeClass('disabled');
+                            showNotification('#2ecc71', 'Downloading File, It will be available in `Downloads` Soon');
+                        }, 300);
                     }
                 }
-            })
+            });
+        }
+
+        function deleteFile(element, path) {
+            $(element).children().css("opacity", "0");
+            $(element).addClass('red');
+            $(element).addClass('loading');
+            $('.dlop').addClass('disabled');
+            sendCommand('0xFI', {
+                action: 'rm',
+                path
+            }, (error, message) => {
+                if (error) {
+                    setTimeout(() => {
+                        showNotification('#f03434', error);
+                        $(element).children().css("opacity", "1");
+                        $(element).removeClass('red');
+                        $('.dlop').removeClass('disabled');
+                    }, 300);
+                } else {
+                    if (message === 'Requested') {
+                        setTimeout(() => {
+                            $(element).children().css("opacity", "1");
+                            $(element).removeClass('red');
+                            $(element).removeClass('loading');
+                            $('.dlop').removeClass('disabled');
+                            showNotification('#2ecc71', 'File Deleted Successfully');
+                            location.reload(); // إعادة تحميل الصفحة لتحديث قائمة الملفات
+                        }, 300);
+                    }
+                }
+            });
         }
     </script>
 </div>
