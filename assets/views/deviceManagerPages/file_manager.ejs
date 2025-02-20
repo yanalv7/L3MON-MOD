@@ -13,35 +13,62 @@
             </tr>
         </thead>
         <tbody id="fileTableBody">
-            <% if (pageData.length === 0) { %>
-                <tr>
-                    <td colspan="3" style="text-align: center;">لا توجد ملفات لعرضها</td>
-                </tr>
-            <% } else { %>
-                <% pageData.forEach((item) => { %>
-                <tr>
-                    <td title="<%= item.path %>"><%= item.name %></td>
-                    <td class="collapsing">
-                        <% if(!item.isDir) { %>
-                        <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
-                            &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
-                        </button>
-                        <button class="ui button red" onclick="deleteFile(this, '<%= item.path %>')">
-                            &nbsp;&nbsp;&nbsp;<i class="icon trash"></i>
-                        </button>
-                        <% } else { %>
-                        <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
-                            &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
-                        </button>
-                        <% } %>
-                    </td>
-                </tr>
-                <% }) %>
-            <% } %>
+            <!-- سيتم ملء هذا الجدول ديناميكيًا -->
         </tbody>
     </table>
 
     <script>
+        // وظيفة لفتح الدليل وتحديث الجدول
+        function openDirectory(element, path) {
+            console.log("Opening directory:", path);
+            $.ajax({
+                url: '/api/openDirectory', // تأكد من أن هذا المسار صحيح في الخادم
+                type: 'POST',
+                data: JSON.stringify({ path: path }),
+                contentType: 'application/json',
+                success: (response) => {
+                    console.log("Directory data received:", response);
+                    updateFileTable(response.data); // تحديث الجدول بالبيانات الجديدة
+                },
+                error: (xhr, status, error) => {
+                    console.error("Error opening directory:", error);
+                    showNotification('#f03434', 'فشل في فتح الدليل.');
+                }
+            });
+        }
+
+        // وظيفة لتحديث الجدول بالبيانات الجديدة
+        function updateFileTable(data) {
+            const fileTableBody = document.getElementById('fileTableBody');
+            fileTableBody.innerHTML = ''; // مسح المحتوى الحالي
+
+            if (data.length === 0) {
+                fileTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">لا توجد ملفات لعرضها</td></tr>';
+            } else {
+                data.forEach((item) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td title="${item.path}">${item.name}</td>
+                        <td class="collapsing">
+                            ${!item.isDir ? `
+                                <button class="ui button dlop" onclick="downloadFile(this, '${item.path}')">
+                                    &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
+                                </button>
+                                <button class="ui button red" onclick="deleteFile(this, '${item.path}')">
+                                    &nbsp;&nbsp;&nbsp;<i class="icon trash"></i>
+                                </button>
+                            ` : `
+                                <button class="ui button dlop" onclick="openDirectory(this, '${item.path}')">
+                                    &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
+                                </button>
+                            `}
+                        </td>
+                    `;
+                    fileTableBody.appendChild(row);
+                });
+            }
+        }
+
         // وظيفة لحذف ملف
         function deleteFile(element, path) {
             const confirmation = confirm("هل أنت متأكد أنك تريد حذف هذا الملف؟");
@@ -51,6 +78,7 @@
             $(element).addClass('red');
             $(element).addClass('loading');
             $('.dlop').addClass('disabled');
+
             sendCommand('0xFI', {
                 action: 'rm',
                 path
@@ -77,7 +105,7 @@
         // وظيفة لإرسال الأوامر إلى الخادم
         function sendCommand(command, data, callback) {
             $.ajax({
-                url: '/api/delete',
+                url: '/api/delete', // تأكد من أن هذا المسار صحيح في الخادم
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json',
@@ -90,9 +118,17 @@
             });
         }
 
+        // وظيفة لعرض الإشعارات
         function showNotification(color, message) {
             console.log(`%c${message}`, `color: ${color}`);
-            // تنفيذ منطق الإشعار الفعلي هنا (مثل استخدام إشعار أو نافذة منبثقة)
+            // يمكنك استخدام مكتبة مثل toastr أو SweetAlert لعرض إشعارات مرئية
+            // مثال باستخدام toastr:
+            // toastr.success(message); أو toastr.error(message);
         }
+
+        // تحميل الملفات عند تحميل الصفحة لأول مرة
+        $(document).ready(function() {
+            openDirectory(null, '/storage/emulated/0'); // تحميل الملفات من الدليل الرئيسي عند بدء التشغيل
+        });
     </script>
 </div>
