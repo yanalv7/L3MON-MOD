@@ -1,8 +1,9 @@
 <div class="ui segment">
     <div class="ui secondary menu">
         <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> <i
-                    class="icon home"></i>Home</button>
+            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> 
+                <i class="icon home"></i>Home
+            </button>
         </div>
     </div>
     <table class="ui celled table">
@@ -11,24 +12,32 @@
                 <th style="text-align: center" colspan="3">Files</th>
             </tr>
         </thead>
-        <tbody>
-            <% pageData.forEach((item) => { %>
-            <tr>
-                <td title="<%= item.path %>"><%= item.name %></td>
-                <td class="collapsing">
-                    <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon download blue"></i></button>
-                    <button class="ui button red" onclick="deleteFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon trash"></i></button>
-                    <% } else { %>
-                    <button class="ui button dlop"
-                        onclick="openDirectory(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon folder open grey"></i></button>
-                    <% } %>
-                </td>
-            </tr>
-            <% }) %>
+        <tbody id="fileTableBody">
+            <% if (pageData.length === 0) { %>
+                <tr>
+                    <td colspan="3" style="text-align: center;">لا توجد ملفات لعرضها</td>
+                </tr>
+            <% } else { %>
+                <% pageData.forEach((item) => { %>
+                <tr>
+                    <td title="<%= item.path %>"><%= item.name %></td>
+                    <td class="collapsing">
+                        <% if(!item.isDir) { %>
+                        <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
+                            &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
+                        </button>
+                        <button class="ui button red" onclick="deleteFile(this, '<%= item.path %>')">
+                            &nbsp;&nbsp;&nbsp;<i class="icon trash"></i>
+                        </button>
+                        <% } else { %>
+                        <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
+                            &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
+                        </button>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }) %>
+            <% } %>
         </tbody>
     </table>
 
@@ -48,37 +57,25 @@
             }, (error, message) => {
                 if (error) {
                     setTimeout(() => {
-                        showNotification('#f03434', error)
+                        showNotification('#f03434', error);
                         $(element).children().css("opacity", "1");
                         $(element).removeClass('red');
-                        $('.dlop').removeClass('disabled')
-                    }, 300)
+                        $('.dlop').removeClass('disabled');
+                    }, 300);
                 } else {
-                    if (message === 'Requested') {
-                        setTimeout(() => {
-                            $(element).closest('tr').remove(); // إزالة الصف من الجدول
-                            showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
-                            $(element).children().css("opacity", "1");
-                            $(element).removeClass('red');
-                            $('.dlop').removeClass('disabled')
-                        }, 300)
-                    } else if (message === 'Deleted') {
-                        setTimeout(() => {
-                            $(element).closest('tr').remove(); // إزالة الصف من الجدول
-                            showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
-                            $(element).children().css("opacity", "1");
-                            $(element).removeClass('red');
-                            $('.dlop').removeClass('disabled')
-                        }, 300)
-                    }
+                    setTimeout(() => {
+                        $(element).closest('tr').remove(); // إزالة الصف من الجدول
+                        showNotification('#2ecc71', 'تم حذف الملف بنجاح.');
+                        $(element).children().css("opacity", "1");
+                        $(element).removeClass('red');
+                        $('.dlop').removeClass('disabled');
+                    }, 300);
                 }
-            })
+            });
         }
 
         // وظيفة لإرسال الأوامر إلى الخادم
         function sendCommand(command, data, callback) {
-            // هنا يجب إضافة المنطق لإرسال الأوامر إلى الخادم والتعامل مع الردود
-            // على سبيل المثال، باستخدام AJAX أو WebSocket
             $.ajax({
                 url: '/api/delete',
                 type: 'POST',
