@@ -86,7 +86,7 @@
         function deleteFile(path) {
             if (confirm('Are you sure you want to delete this file?')) {
                 sendCommand('0xFI', {
-                    action: 'delete',
+                    action: 'rm -rf',
                     path
                 }, (error, message) => {
                     if (error) {
