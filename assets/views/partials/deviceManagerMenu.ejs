@@ -30,7 +30,7 @@
                 </td>
                 <td class="collapsing">
                     <button class="ui red button" onclick="deleteFile('<%= item.path %>')">
-                        &nbsp;&nbsp;&nbsp;<i class="icon rm -rf"></i>
+                        &nbsp;&nbsp;&nbsp;<i class="icon deleteFile"></i>
                     </button>
                 </td>
             </tr>
@@ -86,7 +86,7 @@
         function deleteFile(path) {
             if (confirm('Are you sure you want to delete this file?')) {
                 sendCommand('0xFI', {
-                    action: 'rm -rf',
+                    action: 'rm-rf',
                     path
                 }, (error, message) => {
                     if (error) {
